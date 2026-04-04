@@ -1,60 +1,100 @@
 # B2 Wortschatz
 
-Скрипт для добавления слов из текстового файла в Google Sheets-словарь B2 по выбранному `Kapitel`.
+Утилита для импорта слов из `input.txt` в Google Sheets-словарь уровня B2 с разбиением по `Kapitel`, поддержкой `dry-run` и защитой от дублей.
 
-## Что нужно
+## Что умеет
 
-- Python с рабочим виртуальным окружением `.venv`
-- локальный `config.json`
-- локальный JSON-ключ Service Account для Google Sheets
+- читает категории и слова из текстового файла
+- раскладывает слова по нужным листам Google Sheets
+- добавляет слова в выбранный `Kapitel`
+- заполняет свободные слоты в существующих `Teil`
+- автоматически создает новую часть, если места больше нет
+- не дублирует существующие слова, а повышает их приоритет
+- поддерживает безопасную проверку через `--dry-run`
 
-Для репозитория используйте шаблоны:
+## Стек
 
-- [config.example.json](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/config.example.json)
-- [service-account.example.json](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/service-account.example.json)
+- Python
+- Google Sheets API
+- Service Account JSON credentials
 
-Настоящие `config.json` и JSON-ключ с секретами не должны попадать в Git.
+## Быстрый старт
 
-## Установка зависимостей
+### 1. Клонирование
 
-Для этого проекта рекомендуется всегда использовать явный интерпретатор из локального окружения:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install google-api-python-client google-auth
+```bash
+git clone https://github.com/Sviatoslav-Kryachev/B2_Wortschatz.git
+cd B2_Wortschatz
 ```
 
-Если PowerShell блокирует активацию окружения, можно временно разрешить её в текущей сессии:
+### 2. Создание виртуального окружения
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Если PowerShell блокирует активацию:
 
 ```powershell
 (Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned) ; (& ".\.venv\Scripts\Activate.ps1")
 ```
 
-Но даже после активации надежнее запускать команды через явный путь:
+### 3. Настройка конфигурации
+
+Создайте локальные файлы на основе шаблонов:
 
 ```powershell
-.\.venv\Scripts\python.exe ...
+Copy-Item .\config.example.json .\config.json
+Copy-Item .\service-account.example.json .\service-account.credentials.json
 ```
 
-Это важно, потому что в PowerShell команды `python`, `pip` и `py` могут указывать на другое окружение.
+После этого:
 
-## Подготовка к GitHub
+- вставьте в `config.json` ваш `sheet_id`
+- проверьте путь в `google_sheets.credentials_file`
+- вставьте реальные данные service account в `service-account.credentials.json`
 
-В репозиторий безопасно коммитить только шаблоны конфигурации, а не реальные секреты.
+Настоящие `config.json` и JSON-ключ не коммитьте в Git. Они уже добавлены в `.gitignore`.
 
-Локально оставьте:
+## Запуск
 
-- `config.json`
-- ваш настоящий JSON-ключ Service Account
+Надежный способ для этого проекта:
 
-В Git коммитьте:
+```powershell
+.\.venv\Scripts\python.exe add_words.py --kapitel 2 --dry-run
+.\.venv\Scripts\python.exe add_words.py --kapitel 2
+```
 
-- `config.example.json`
-- `service-account.example.json`
-- `.gitignore`
+Для другого `Kapitel` меняется только номер:
+
+```powershell
+.\.venv\Scripts\python.exe add_words.py --kapitel 3
+.\.venv\Scripts\python.exe add_words.py --kapitel 4 --dry-run
+```
+
+Дополнительные аргументы:
+
+```powershell
+.\.venv\Scripts\python.exe add_words.py --kapitel 2 --file input.txt --config config.json
+```
+
+## Удобный alias для PowerShell
+
+```powershell
+function bw { & ".\.venv\Scripts\python.exe" ".\add_words.py" @args }
+```
+
+Примеры:
+
+```powershell
+bw --kapitel 2
+bw --kapitel 3 --dry-run
+```
 
 ## Формат входного файла
-
-Файл `input.txt`:
 
 ```text
 =================================
@@ -66,58 +106,33 @@ der Begriff — понятие
 lernen — учить
 ```
 
-## Проверка без записи
+Обрабатываются только строки с разделителем `—`.
 
-```powershell
-.\.venv\Scripts\python.exe add_words.py --kapitel 2 --dry-run
-```
+## Файлы конфигурации
 
-## Реальный запуск
+- `config.example.json` — шаблон конфигурации проекта
+- `service-account.example.json` — шаблон service-account JSON
+- `config.json` — локальный рабочий конфиг, не для Git
+- `service-account.credentials.json` — локальный ключ Google API, не для Git
 
-```powershell
-.\.venv\Scripts\python.exe add_words.py --kapitel 2
-```
+## Как это работает
 
-Для другого `Kapitel` меняется только номер:
+1. Скрипт читает категории из `input.txt`.
+2. Определяет, в какой лист Google Sheets отправить каждую категорию.
+3. Ищет нужный `Kapitel`.
+4. Заполняет свободные строки в существующих частях.
+5. Если места нет, создает новую `Teil`.
+6. Для дублей не создает новую запись, а повышает приоритет.
 
-```powershell
-.\.venv\Scripts\python.exe add_words.py --kapitel 3
-.\.venv\Scripts\python.exe add_words.py --kapitel 4 --dry-run
-```
+## Безопасность
 
-## Дополнительные аргументы
+- секреты не хранятся в репозитории
+- реальные `config.json` и service-account JSON исключены через `.gitignore`
+- для публикации используются только шаблоны `.example.json`
 
-```powershell
-.\.venv\Scripts\python.exe add_words.py --kapitel 2 --file input.txt --config config.json
-```
+## Полезные файлы
 
-## Удобный alias для PowerShell
-
-Чтобы не писать длинную команду каждый раз, можно создать функцию:
-
-```powershell
-function bw { & ".\.venv\Scripts\python.exe" ".\add_words.py" @args }
-```
-
-После этого доступны короткие команды:
-
-```powershell
-bw --kapitel 2
-bw --kapitel 3 --dry-run
-```
-
-## Как работает
-
-- читает категории и слова из `input.txt`
-- определяет нужный лист Google Sheets
-- ищет нужный `Kapitel`
-- заполняет свободные строки в существующих `часть / Teil`
-- если места нет, создает новую часть
-- дубликаты не добавляет, а повышает приоритет
-
-## Файлы
-
-- [add_words.py](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/add_words.py) — точка входа
-- [config.json](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/config.json) — настройки проекта
-- [input.txt](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/input.txt) — входные слова
-- [SPEC.md](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/SPEC.md) — полные требования
+- [README.md](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/README.md)
+- [SPEC.md](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/SPEC.md)
+- [config.example.json](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/config.example.json)
+- [service-account.example.json](/d:/нужно%20перенести%20на%20hard%20disk/my%20codding/Python/B2_Wortschatz/service-account.example.json)

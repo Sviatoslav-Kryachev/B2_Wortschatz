@@ -1,0 +1,24 @@
+{
+  "google_sheets": {
+    "sheet_id": "PASTE_YOUR_SPREADSHEET_ID_HERE",
+    "credentials_file": "service-account.credentials.json"
+  },
+  "sheet_layout": {
+    "index_column": "A",
+    "term_column": "B",
+    "definition_column": "D",
+    "module_link_column": "E",
+    "priority_column": "G",
+    "data_start_row": 2,
+    "teil_size": 20,
+    "default_priority": 1,
+    "header_fill_color": "#3f9744"
+  },
+  "category_to_sheet": {
+    "Существительное": "📗🇩🇪 Fokus Deutsch — B2",
+    "Глаголы": "📗🇩🇪 Fokus Deutsch — B2",
+    "Наречия / Прилагательные": "📗🇩🇪 Fokus Deutsch — B2",
+    "Фраза: 🗣 REDEMITTEL": "🗣️ REDEMITTEL Sprechen",
+    "✍️ REDEMITTEL Schreiben": "✍️ REDEMITTEL Schreiben"
+  }
+}

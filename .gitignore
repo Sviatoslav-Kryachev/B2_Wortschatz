@@ -1,0 +1,13 @@
+.venv/
+.venv_fixed/
+.venv_bad_store_alias/
+.venv_broken_20260404/
+.venv_store_venv_20260404/
+__pycache__/
+*.pyc
+
+# Local secrets
+config.json
+*.credentials.json
+api-project-for-worlds-bot-ae0bc4f8d803.json
+

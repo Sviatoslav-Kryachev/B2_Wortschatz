@@ -1,79 +1,14 @@
 =================================
 Существительное:
-die Zuordnung (–en) — соотнесение, отнесение, классификация
-die Schichtarbeit (ед.ч.) — посменная работа
-die Gleitzeit (ед.ч.) — скользящий график работы
-die Vollzeitarbeit (ед.ч.) — работа на полную ставку
-der Arbeitnehmende (-n) — работник, сотрудник
-das Arbeitszeitmodell (-e) — модель рабочего времени
-die Definition (-en) — определение
-die Körpertemperatur (-en) — температура тела
-das Datum (Daten) — данные
-der Bericht (-e) — отчёт, доклад
-die Anforderung (-en) — требование
-die Zuverlässigkeit (ед.ч.) — надежность
-die Kita (Kindertagesstätte) (-s) — детский сад
-die Baustelle (-n) — стройка
-die Recherche (-n) — исследование
-die Erziehung (ед.ч.) — воспитание
-die Finanzbranche (-n) — финансовая отрасль
-das Gesundheitswesen (ед.ч.) — система здравоохранения
-das Baugewerbe (ед.ч.) — строительная отрасль
-das Handwerk (-e) — ремесло
-der Graf (-en) — граф; график
-die Versicherungsdienstleistung (-en) — страховая услуга
-die Forstwirtschaft (ед.ч.) — лесное хозяйство
-die Fischerei (-en) — рыболовство
-der Dienstleistungssektor (-en) — сектор услуг
-das Wohnungswesen (ед.ч.) — жилищное хозяйство
-der Anteil (-e) — доля, часть
-die Sozialversicherungspflicht (ед.ч.) — обязанность социального страхования
-die Arbeitslosenquote (-n) — уровень безработицы
-die Konjunktur (ед.ч.) — конъюнктура
-die Arbeitsmarktzahl (-en) — показатель рынка труда
-der / die Beschäftigte (-n) — работник, занятый
-der / die Teilzeitbeschäftigte (-n) — работник неполный рабочий день
-der Job (-s) — работа
 
+die Metallverarbeitung (-en) — обработка металлов, металлообработка
 =================================
 Глаголы:
-abweichen; wich ab; ist abgewichen — отклоняться
-vereinbaren; vereinbarte; hat vereinbart — договариваться
-kalkulieren; kalkulierte; hat kalkuliert — рассчитывать
-überwachen; überwachte; hat überwacht — контролировать
-bedienen; bediente; hat bedient — обслуживать
-verwalten; verwaltete; hat verwaltet — управлять
-beaufsichtigen; beaufsichtigte; hat beaufsichtigt — присматривать
-beraten; beriet; hat beraten — консультировать
-recherchieren; recherchierte; hat recherchiert — исследовать
-herstellen; stellte her; hat hergestellt — производить
-anbieten; bot an; hat angeboten — предлагать
-erscheinen; erschien; ist erschienen — появляться
-befassen; befasste; hat befasst — заниматься
-stammen; stammte; hat gestammt — происходить
-veröffentlichen; veröffentlichte; hat veröffentlicht — публиковать
-fallen; fiel; ist gefallen — падать
-überlegen; überlegte; hat überlegt — обдумывать
-gucken; guckte; hat geguckt — смотреть
-vertreten; vertrat; hat vertreten — представлять
 
 =================================
 Наречия / Прилагательные:
-tariflich — тарифный
-einzelne — отдельный
-ganze — целый
-wesentlich — существенный
-niedrigste — самый низкий
-relevant — актуальный
-schlussendlich — в конце концов
-sonstigen — прочий
-dienstleistungsorientiert — ориентированный на услуги
-insbesondere — особенно
-wissenschaftlich — научный
-sozialversicherungspflichtig — подлежащий обязательному соцстрахованию
-befristet — срочный
+
 =================================
 Фраза: 🗣 REDEMITTEL
 
-zweithöchste / zweitgrößte Anteil — вторая по величине доля
 =================================

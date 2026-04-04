@@ -1,10 +1,10 @@
-﻿import re
+import re
 import socket
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from utils import normalize_text
+from utils import normalize_text, term_duplicate_key
 
 
 @dataclass(slots=True)
@@ -318,34 +318,30 @@ class GoogleSheetsHandler:
         new_blocks: list[tuple[int, list[list[str]]]] = []
 
         for word in words:
-            normalized_term = normalize_text(word.term)
-            duplicate_info = existing_words.get(normalized_term)
-            if duplicate_info is not None:
+            duplicate_key = term_duplicate_key(word.term)
+            duplicate_info = existing_words.get(duplicate_key)
+            if duplicate_info:
                 result.duplicate_count += 1
-                priority_row, current_priority = duplicate_info
-                next_priority = min(max(current_priority + 1, 1), 3)
-                if next_priority != current_priority and not self.dry_run:
-                    value_updates.append(
-                        self._build_cell_update(
-                            sheet_name=sheet_name,
-                            column=self.sheet_layout.priority_column,
-                            row_number=priority_row,
-                            value=self._format_priority_value(next_priority),
+                row_num, curr_priority = duplicate_info
+                next_priority = min(max(curr_priority + 1, 1), 3)
+                if next_priority != curr_priority:
+                    if not self.dry_run:
+                        value_updates.append(
+                            self._build_cell_update(
+                                sheet_name=sheet_name,
+                                column=self.sheet_layout.priority_column,
+                                row_number=row_num,
+                                value=self._format_priority_value(next_priority),
+                            )
                         )
-                    )
-                    result.priority_updated_count += 1
-                elif next_priority != current_priority:
                     result.priority_updated_count += 1
                 planned_actions.append(
                     PlannedAction(
                         action="priority_update",
-                        row_number=priority_row,
+                        row_number=row_num,
                         teil=None,
                         term=word.term,
-                        details=(
-                            f"{self._format_priority_value(current_priority)}"
-                            f" -> {self._format_priority_value(next_priority)}"
-                        ),
+                        details=f"{self._format_priority_value(curr_priority)} -> {self._format_priority_value(next_priority)}",
                     )
                 )
                 continue
@@ -361,7 +357,7 @@ class GoogleSheetsHandler:
                 )
                 if not self.dry_run:
                     value_updates.append(self._build_row_update(sheet_name, slot.row_number, row_values))
-                existing_words[normalized_term] = (slot.row_number, word.priority)
+                existing_words[duplicate_key] = (slot.row_number, word.priority)
                 result.added_count += 1
                 planned_actions.append(
                     PlannedAction(
@@ -373,42 +369,30 @@ class GoogleSheetsHandler:
                 )
                 continue
 
-            if not new_blocks or self._find_next_empty_block_row(new_blocks[-1][1]) is None:
-                new_block_teil = kapitel_state.next_teil + len(new_blocks)
-                module_label = self._build_module_label(sheet_name, kapitel, new_block_teil)
-                new_block_rows = self._build_empty_block_rows(module_label)
-                new_blocks.append((new_block_teil, new_block_rows))
-                planned_actions.append(
-                    PlannedAction(
-                        action="create_teil",
-                        row_number=kapitel_state.insert_row + (len(new_blocks) - 1) * len(new_block_rows),
-                        teil=new_block_teil,
-                        term="",
-                        details=f"insert before row {kapitel_state.insert_row + (len(new_blocks) - 1) * len(new_block_rows)}",
-                    )
-                )
-
-            new_block_teil, new_block_rows = new_blocks[-1]
+            new_block_teil = kapitel_state.next_teil + len(new_blocks)
+            module_label = self._build_module_label(sheet_name, kapitel, new_block_teil)
+            new_block_rows = self._build_empty_block_rows(module_label)
+            new_blocks.append((new_block_teil, new_block_rows))
             next_slot_idx = self._find_next_empty_block_row(new_block_rows)
-            if next_slot_idx is None:
-                raise ValueError("Не удалось найти пустой слот в новом блоке.")
             row_values = self._build_word_row(
                 item_index=next_slot_idx,
                 term=word.term,
                 definition=word.definition,
-                module_label=self._build_module_label(sheet_name, kapitel, new_block_teil),
+                module_label=module_label,
                 priority=word.priority,
             )
             new_block_rows[next_slot_idx] = row_values
             result.added_count += 1
+            new_row_number = kapitel_state.insert_row + (len(new_blocks) - 1) * len(new_block_rows) + next_slot_idx
             planned_actions.append(
                 PlannedAction(
                     action="fill_new_teil",
-                    row_number=kapitel_state.insert_row + (len(new_blocks) - 1) * len(new_block_rows) + next_slot_idx,
+                    row_number=new_row_number,
                     teil=new_block_teil,
                     term=word.term,
                 )
             )
+            existing_words[duplicate_key] = (new_row_number, word.priority)
 
         if not self.dry_run:
             self._apply_mutations(
@@ -728,7 +712,8 @@ class GoogleSheetsHandler:
                 continue
             priority = self._parse_int(self._get_row_value(row, priority_col), self.sheet_layout.default_priority)
             priority = self._parse_priority_value(self._get_row_value(row, priority_col), priority)
-            existing_words[normalize_text(term)] = (row_number, priority)
+            key = term_duplicate_key(term)
+            existing_words.setdefault(key, (row_number, priority))
 
         return existing_words
 
@@ -1032,5 +1017,3 @@ class GoogleSheetsHandler:
         if not match:
             return None
         return int(match.group(1)), int(match.group(2))
-
-

@@ -1,4 +1,5 @@
-﻿import json
+import json
+import re
 from pathlib import Path
 
 
@@ -47,4 +48,19 @@ def load_config(config_path: str | Path) -> dict:
 
 def normalize_text(value: str) -> str:
     return " ".join(value.strip().casefold().split())
+
+
+def term_duplicate_key(value: str) -> str:
+    """
+    Ключ для сравнения дубликатов: как normalize_text, но без хвостового блока в скобках
+    (мн. число и т.п.), чтобы der Kunde и der Kunde (-n), а также (-en) и (-enen)
+    считались одним термином.
+    """
+    base = normalize_text(value)
+    while True:
+        stripped = re.sub(r"\s*\([^)]*\)\s*$", "", base).strip()
+        if stripped == base:
+            break
+        base = stripped
+    return " ".join(base.split())
 

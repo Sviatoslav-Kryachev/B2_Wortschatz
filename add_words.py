@@ -53,7 +53,9 @@ def main() -> None:
     configure_console_output()
     args = build_argument_parser().parse_args()
 
+    print("Загрузка конфигурации...")
     config = load_config(args.config)
+    print("Чтение входного файла...")
     categories_words = parse_input_file(args.file)
 
     print("Найдены категории во входном файле:")
@@ -63,6 +65,10 @@ def main() -> None:
     gs_handler = GoogleSheetsHandler.from_config(config, dry_run=args.dry_run)
     data_manager = DataManager(gs_handler, config=config)
 
+    print("Подключение к Google Sheets...")
+    gs_handler.connect()
+    print(f"Подключение успешно. Доступно листов: {len(gs_handler.sheet_title_to_id)}")
+
     words_by_sheet: OrderedDict[str, list[tuple[str, str]]] = OrderedDict()
     for category, words in categories_words.items():
         sheet_name = data_manager._resolve_sheet_name(category)
@@ -70,6 +76,7 @@ def main() -> None:
 
     results = []
     for sheet_name, words in words_by_sheet.items():
+        print(f"Обработка листа: {sheet_name} ({len(words)} слов)")
         result = data_manager.add_words_to_sheet(
             sheet_name=sheet_name,
             words=words,

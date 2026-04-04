@@ -1,4 +1,5 @@
 ﻿import re
+import socket
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,7 @@ class SheetLayout:
     teil_size: int = 20
     default_priority: int = 0
     header_fill_color: str = "#3f9744"
+    priority_labels: dict[int, str] | None = None
 
     @classmethod
     def from_config(cls, config: dict[str, Any]) -> "SheetLayout":
@@ -45,6 +47,11 @@ class SheetLayout:
             teil_size=int(config.get("teil_size", 20)),
             default_priority=int(config.get("default_priority", 0)),
             header_fill_color=config.get("header_fill_color", "#3f9744"),
+            priority_labels={
+                int(priority): str(label)
+                for priority, label in config.get("priority_labels", {}).items()
+            }
+            or None,
         )
 
 
@@ -104,6 +111,12 @@ class GoogleSheetsHandler:
         self.sheet_title_to_id: dict[str, int] = {}
         self.sheet_title_to_row_count: dict[str, int] = {}
         self.sheet_title_to_column_count: dict[str, int] = {}
+        self.priority_labels = self.sheet_layout.priority_labels or {
+            0: "0",
+            1: "1",
+            2: "2",
+            3: "3",
+        }
 
     @classmethod
     def from_config(cls, config: dict, dry_run: bool = False) -> "GoogleSheetsHandler":
@@ -131,6 +144,8 @@ class GoogleSheetsHandler:
         try:
             from google.oauth2.service_account import Credentials
             import googleapiclient.discovery as discovery
+            import httplib2
+            from google_auth_httplib2 import AuthorizedHttp
         except ImportError as exc:
             raise ImportError(
                 "Не установлены зависимости. Установи: pip install google-api-python-client google-auth"
@@ -254,8 +269,33 @@ class GoogleSheetsHandler:
             str(credentials_path),
             scopes=["https://www.googleapis.com/auth/spreadsheets"],
         )
-        self.service = discovery.build("sheets", "v4", credentials=credentials, cache_discovery=False)
-        self.sheet_title_to_id = self._load_sheet_titles()
+        previous_socket_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(15)
+        http = httplib2.Http(timeout=30)
+        authed_http = AuthorizedHttp(credentials, http=http)
+
+        try:
+            self.service = discovery.build(
+                "sheets",
+                "v4",
+                http=authed_http,
+                cache_discovery=False,
+            )
+            self.sheet_title_to_id = self._load_sheet_titles()
+        except socket.timeout as exc:
+            raise TimeoutError(
+                "Google Sheets API не ответил за 15 секунд. Проверь интернет, VPN/прокси, firewall и доступ к Google."
+            ) from exc
+        except TimeoutError as exc:
+            raise TimeoutError(
+                "Google Sheets API не ответил за 30 секунд. Проверь интернет, доступ к Google API и попробуй снова."
+            ) from exc
+        except OSError as exc:
+            raise ConnectionError(
+                f"Не удалось подключиться к Google Sheets API: {exc}"
+            ) from exc
+        finally:
+            socket.setdefaulttimeout(previous_socket_timeout)
 
     def sync_category_words(
         self,
@@ -290,7 +330,7 @@ class GoogleSheetsHandler:
                             sheet_name=sheet_name,
                             column=self.sheet_layout.priority_column,
                             row_number=priority_row,
-                            value=str(next_priority),
+                            value=self._format_priority_value(next_priority),
                         )
                     )
                     result.priority_updated_count += 1
@@ -302,7 +342,10 @@ class GoogleSheetsHandler:
                         row_number=priority_row,
                         teil=None,
                         term=word.term,
-                        details=f"priority {current_priority} -> {next_priority}",
+                        details=(
+                            f"{self._format_priority_value(current_priority)}"
+                            f" -> {self._format_priority_value(next_priority)}"
+                        ),
                     )
                 )
                 continue
@@ -684,6 +727,7 @@ class GoogleSheetsHandler:
             if not term or self._looks_like_header(term):
                 continue
             priority = self._parse_int(self._get_row_value(row, priority_col), self.sheet_layout.default_priority)
+            priority = self._parse_priority_value(self._get_row_value(row, priority_col), priority)
             existing_words[normalize_text(term)] = (row_number, priority)
 
         return existing_words
@@ -804,8 +848,26 @@ class GoogleSheetsHandler:
         row[self._column_to_index(self.sheet_layout.term_column) - 1] = term
         row[self._column_to_index(self.sheet_layout.definition_column) - 1] = definition
         row[self._column_to_index(self.sheet_layout.module_link_column) - 1] = module_label
-        row[self._column_to_index(self.sheet_layout.priority_column) - 1] = str(priority)
+        row[self._column_to_index(self.sheet_layout.priority_column) - 1] = self._format_priority_value(priority)
         return row
+
+    def _format_priority_value(self, priority: int) -> str:
+        return self.priority_labels.get(priority, str(priority))
+
+    def _parse_priority_value(self, value: str, fallback: int) -> int:
+        normalized_value = value.strip()
+        if not normalized_value:
+            return fallback
+
+        for priority, label in self.priority_labels.items():
+            if normalized_value == label:
+                return priority
+
+        match = re.match(r"\s*(\d+)", normalized_value)
+        if match:
+            return min(int(match.group(1)), 3)
+
+        return fallback
 
     def _load_sheet_titles(self) -> dict[str, int]:
         response = (
@@ -834,10 +896,33 @@ class GoogleSheetsHandler:
         response = (
             self.service.spreadsheets()
             .values()
-            .get(spreadsheetId=self.sheet_id, range=f"'{sheet_name}'!A:G")
+            .batchGet(
+                spreadsheetId=self.sheet_id,
+                ranges=[
+                    f"'{sheet_name}'!A:B",
+                    f"'{sheet_name}'!E:G",
+                ],
+            )
             .execute()
         )
-        return response.get("values", [])
+        value_ranges = response.get("valueRanges", [])
+        left_values = value_ranges[0].get("values", []) if len(value_ranges) > 0 else []
+        right_values = value_ranges[1].get("values", []) if len(value_ranges) > 1 else []
+
+        row_count = max(len(left_values), len(right_values))
+        merged_rows: list[list[str]] = []
+        for row_index in range(row_count):
+            left_row = left_values[row_index] if row_index < len(left_values) else []
+            right_row = right_values[row_index] if row_index < len(right_values) else []
+
+            row = [""] * 7
+            for index, value in enumerate(left_row[:2]):
+                row[index] = value
+            for index, value in enumerate(right_row[:3], start=4):
+                row[index] = value
+            merged_rows.append(row)
+
+        return merged_rows
 
     def _ensure_sheet_has_columns(self, sheet_name: str, sheet_id: int, required_column_count: int) -> None:
         current_column_count = self.sheet_title_to_column_count.get(sheet_name, 0)

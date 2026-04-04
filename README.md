@@ -56,6 +56,7 @@ Copy-Item .\service-account.example.json .\service-account.credentials.json
 - вставьте в `config.json` ваш `sheet_id`
 - проверьте путь в `google_sheets.credentials_file`
 - вставьте реальные данные service account в `service-account.credentials.json`
+- при необходимости подстройте `sheet_layout.priority_labels` под текст вашего dropdown в Google Sheets
 
 Настоящие `config.json` и JSON-ключ не коммитьте в Git. Они уже добавлены в `.gitignore`.
 
@@ -80,6 +81,16 @@ Copy-Item .\service-account.example.json .\service-account.credentials.json
 ```powershell
 .\.venv\Scripts\python.exe add_words.py --kapitel 2 --file input.txt --config config.json
 ```
+
+## Проверка подключения
+
+Перед импортом можно отдельно проверить доступ к Google Sheets:
+
+```powershell
+.\.venv\Scripts\python.exe check_connection.py
+```
+
+Если эта команда не проходит, проблема не в логике импорта слов, а в доступе к Google Sheets API, `sheet_id` или credentials.
 
 ## Удобный alias для PowerShell
 
@@ -114,6 +125,9 @@ lernen — учить
 - `service-account.example.json` — шаблон service-account JSON
 - `config.json` — локальный рабочий конфиг, не для Git
 - `service-account.credentials.json` — локальный ключ Google API, не для Git
+
+Для колонки приоритета можно задать точные тексты dropdown через `sheet_layout.priority_labels`.
+Тогда скрипт будет записывать не просто `1/2/3`, а выбранный пункт списка.
 
 ## Как это работает
 

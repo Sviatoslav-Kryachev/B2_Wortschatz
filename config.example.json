@@ -12,7 +12,13 @@
     "data_start_row": 2,
     "teil_size": 20,
     "default_priority": 1,
-    "header_fill_color": "#3f9744"
+    "header_fill_color": "#3f9744",
+    "priority_labels": {
+      "0": "0 — не встречалось повторно",
+      "1": "1 — встретилось 1 раз повторно",
+      "2": "2 — встретилось 2 раза",
+      "3": "3 и более — высокий приоритет повторения"
+    }
   },
   "category_to_sheet": {
     "Существительное": "📗🇩🇪 Fokus Deutsch — B2",

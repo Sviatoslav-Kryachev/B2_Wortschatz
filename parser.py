@@ -13,9 +13,12 @@ KNOWN_CATEGORY_PREFIXES = (
 
 
 def _is_category_line(line: str) -> bool:
-    if line.endswith(":"):
-        return True
-    return any(line.startswith(prefix) for prefix in KNOWN_CATEGORY_PREFIXES)
+    normalized = line.strip()
+    if not normalized or "—" in normalized:
+        return False
+    if normalized == "Фраза:":
+        return False
+    return any(normalized.startswith(prefix) for prefix in KNOWN_CATEGORY_PREFIXES)
 
 
 def _normalize_category_name(line: str) -> str:
@@ -44,8 +47,10 @@ def parse_input_file(file_path: str | Path) -> dict[str, list[tuple[str, str]]]:
                 continue
 
             if _is_category_line(line):
-                current_category = _normalize_category_name(line)
-                categories.setdefault(current_category, [])
+                next_category = _normalize_category_name(line)
+                if next_category:
+                    current_category = next_category
+                    categories.setdefault(current_category, [])
                 continue
 
             if "—" not in line:

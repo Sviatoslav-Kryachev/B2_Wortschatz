@@ -52,15 +52,38 @@ def normalize_text(value: str) -> str:
 
 def term_duplicate_key(value: str) -> str:
     """
-    Ключ для сравнения дубликатов: как normalize_text, но без хвостового блока в скобках
-    (мн. число и т.п.), чтобы der Kunde и der Kunde (-n), а также (-en) и (-enen)
-    считались одним термином.
+    Ключ для сравнения дубликатов: нормализует текст, удаляет:
+    - формы глаголов (; ... ; hat ...)
+    - множественное число в скобках (-en), (-n)
+    - запятые с окончаниями , -en, , -n
+    - возвратное sich
+    - артикли в начале
+    - пробелы и знаки препинания
     """
     base = normalize_text(value)
-    while True:
-        stripped = re.sub(r"\s*\([^)]*\)\s*$", "", base).strip()
-        if stripped == base:
-            break
-        base = stripped
-    return " ".join(base.split())
-
+    
+    # Удаляем возвратное "sich" в начале
+    base = re.sub(r'^sich\s+', '', base)
+    
+    # Удаляем артикли в начале (der, die, das)
+    base = re.sub(r'^(der|die|das)\s+', '', base)
+    
+    # Удаляем формы глаголов: ; что-то; hat что-то
+    base = re.sub(r'\s*;.*$', '', base)
+    
+    # Удаляем скобки с окончаниями в конце (-en), (-n) и т.д.
+    base = re.sub(r'\s*\([^)]*\)\s*$', '', base)
+    
+    # Удаляем запятые с окончаниями , -en, , -n
+    base = re.sub(r'\s*,\s*-\s*[en]+\s*$', '', base)
+    base = re.sub(r'\s*,\s*-[en]+\s*$', '', base)
+    
+    # Удаляем одиночные запятые в конце
+    base = re.sub(r'\s*,\s*$', '', base)
+    
+    # Удаляем дефисы и лишние пробелы
+    base = re.sub(r'\s*-\s*', ' ', base)
+    base = re.sub(r'[,]', '', base)
+    base = re.sub(r'\s+', ' ', base).strip()
+    
+    return base

@@ -1,25 +1,146 @@
-=================================
+﻿=================================
 Существительное:
 
-der Anbieter (-) — поставщик, провайдер
-die Unterbrechung (-en) — перерыв, прерывание
-der Erwerbstätige (-n) — работающий по найму, занятый (человек)
-die Bedeutung (-en) — значение
-
+die Verabredung (-en) — договоренность о встрече; свидание
+der Termin (-e) — встреча, срок, дата, прием
+der Arbeitsalltag (Sg.) — рабочие будни
+die Arbeitsdichte (Sg.) — плотность работы
+das Arbeitsleben (Sg.) — трудовая жизнь
+die Arbeitswelt (Sg.) — мир труда
+die Baustelle (-n) — стройка; место строительных работ
+die Berufssparte (-n) — профессиональная отрасль, сфера деятельности
+der Beschäftigte (-n) — работник, служащий
+die Beschäftigte (-n) — работница, служащая
+die Beschleunigung (-en) — ускорение
+die Herausforderung (-en) — вызов, трудность
+der Maurer (-) — каменщик, строитель
+die Maurerin (-nen) — каменщица
+die Strecke (-n) — дистанция, отрезок пути
+das Treffen (-) — встреча
+das Wohlbefinden (Sg.) — самочувствие, благополучие
+der Zeitdruck (Sg.) — цейтнот, нехватка времени
+die Abteilungskonferenz (-en) — собрание отдела
+der Anspruch (Ansprüche) — притязание, требование, право
+der Arbeitsweg (-e) — путь на работу
+die Arbeitszeit (-en) — рабочее время
+das Arbeitszeitgesetz (-e) — закон о рабочем времени
+die Betriebsruhe (Sg.) — простой предприятия; нерабочее время
+das EDV-System (-e) — компьютерная система
+der Ersatzruhetag (-e) — дополнительный выходной день
+der Fall (Fälle) — случай
+der Freizeitausgleich (Sg.) — компенсация свободным временем
+der Mindesturlaub (Sg.) — минимальный отпуск
+die Pflicht (-en) — обязанность, долг
+das Recht (-e) — право
+die (gesetzliche) Regel (-n) — (законное) правило
+die Schichtarbeit (Sg.) — сменная работа
+die Teilzeitarbeit (Sg.) — частичная занятость
+die Überstunde (-n) — сверхурочный час
+der Urlaubstag (-e) — отпускной день
+die Urlaubszeit (-en) — отпускное время, сезон отпусков
+die Vollzeitarbeit (Sg.) — полная занятость
+die Wochenendarbeit (-en) — работа в выходные
+die Deadline (Sg.) — крайний срок
+das Drehbuch (Drehbücher) — сценарий
+der Entwurf (Entwürfe) — проект, эскиз, набросок
+die Kampagne (-n) — кампания
+die Kosmetikserie (-n) — серия косметики
+das Printmedium (Printmedien) — печатное СМИ
+der Senior Manager (-) — старший менеджер
+die Senior Managerin (-nen) — старший менеджер (жен.)
+der Werbefilm (-e) — рекламный фильм
+die Werbekampagne (-n) — рекламная кампания
+die Pünktlichkeit (Sg.) — пунктуальность
+die Abmahnung (-en) — предупреждение; официальное предостережение
+das Arbeitsgericht (-e) — трудовой суд
+der Betriebsrat (Betriebsräte) — совет предприятия, профком
+die Betriebsfeier (-n) — корпоративный праздник
+der Heizungstechniker (-) — специалист по отоплению
+die Heizungstechnikerin (-nen) — специалистка по отоплению
+die Hilfe (-n) — помощь
+das Zuspätkommen (Sg.) — опоздание
+das Verständnis (Sg.) — понимание, сочувствие
+der Unterricht (Sg.) — занятие, урок, учебные занятия
+die Übung (-en) — упражнение; тренировка, занятие
+der Steuerberater (-) — налоговый консультант
+die Ungerechtigkeit (-en) — несправедливость
+die Arbeitsplatzbeschreibung (-en) — описание рабочего места, должностная инструкция
+das Arbeitsrecht (Sg.) — трудовое право
+die Personalakte (-n) — личное дело (сотрудника)
+die Mahnung (-en) — напоминание; предупреждение
+die Folge (-n) — последствие; серия; очередь
+die Konsequenz (-en) — последствие; последовательность; вывод
+die Gleitzeit (Sg.) — скользящий график работы
+die Abgabe (-n) — сдача (экзамена); передача; налог, сбор; выхлоп
+der Vorrat (Vorräte) — запас, припасы
+die Benzinhöhe — уровень бензина
+die Botschaft (-en) — послание, сообщение; посольство
+die Preissteigerung (-en) — повышение цен, рост цен
+der Referenzpreis (-e) — справочная цена, эталонная цена
+das Doppelte — двойное количество, вдвое больше
+das Brüderland (Sg.) — страна братьев (поэтическое название)
+der Kanal (Kanäle) — канал
+die Durchfahrt (-en) — проезд, сквозной проезд
+der Stromausfall (Stromausfälle) — отключение электроэнергии, сбой электроснабжения
+der Bescheid (-e) — извещение, уведомление; решение, ответ (официальный); информация
+der Inhalt (-e) — содержание; содержимое; объем
+der Inhaltsstoff (-e) — составная часть, ингредиент, компонент (содержащееся вещество)
 =================================
 Глаголы:
 
-erwerben; erwarb; hat erworben — приобретать
-verlassen; verließ; hat verlassen — покидать, оставлять
-sich beraten lassen; ließ sich beraten; hat sich beraten lassen — консультироваться
-sich beschweren; beschwerte sich; hat sich beschwert — жаловаться
+sich etwas anschauen; schaute sich an; hat sich angeschaut — смотреть, рассматривать что-либо
+sich auswirken; wirkte sich aus; hat sich ausgewirkt — сказываться, влиять
+sich beeilen; beeilte sich; hat sich beeilt — торопиться
+etwas bewältigen; bewältigte; hat bewältigt — справляться, преодолевать
+einen Termin absagen; sagte ab; hat abgesagt — отменять встречу
+sich verspäten; verspätete sich; hat sich verspätet — опаздывать
+sich absprechen; sprach sich ab; hat sich abgesprochen — договариваться, согласовывать
+einweisen in (Akk.); wies ein; hat eingewiesen — вводить в курс дела, инструктировать
+etwas vorschreiben; schrieb vor; hat vorgeschrieben — предписывать, назначать
+dokumentieren; dokumentierte; hat dokumentiert — документировать
+um Hilfe bitten; bat; hat gebeten — просить о помощи
+entfallen; entfiel; ist entfallen — отменяться, выпадать; ускользать (из памяти)
+streichen; strich; hat gestrichen — отменять, вычеркивать; красить, мазать; гладить
+erleichtern; erleichterte; hat erleichtert — облегчать; облегчать душу; обкрадывать
+abmahnen; mahnte ab; hat abgemahnt — делать предупреждение, выносить официальное предостережение
+vorkommen; kam vor; ist vorgekommen — случаться, происходить; встречаться, попадаться; казаться
+sich verabreden; verabredete sich; hat sich verabredet — договариваться о встрече
+sparen; sparte; hat gespart — экономить, копить
+sein; war; ist gewesen — быть, существовать
+versüßen; versüßte; hat versüßt — подслащивать; скрашивать (жизнь)
+Bescheid wissen; wusste Bescheid; hat Bescheid gewusst — знать, быть в курсе, быть осведомленным
+anschauen; schaute an; hat angeschaut — смотреть, рассматривать
+beinhalten; beinhaltete; hat beinhaltet — содержать в себе, включать
+
 
 =================================
 Наречия / Прилагательные:
 
+zueinander — друг к другу, один к другому
+abhängig — зависимый
+angenehm — приятный
+ungerecht — несправедливый
+am Ende des Monats — в конце месяца
+relevant — актуальный, важный, значимый
+verärgert sein über (+ Akk.) — быть рассерженным на, раздосадованным чем-либо
+handelsüblich — обычный в торговле, стандартный, принятый в коммерции
+preiswert — недорогой, доступный по цене
+kurzfristig — краткосрочный
+mittelfristig — среднесрочный
+langfristig — долгосрочный
+äquativ — экватив (грамматический термин)
+sprichwörtlich — буквальный (в значении "как в пословице"), вошедший в поговорку, общеизвестный
+neulich — недавно
+
 =================================
 Фраза: 🗣 REDEMITTEL 
 
+auf der Strecke bleiben — оставаться незавершенным, теряться по пути
+Anspruch haben auf (+ Akk.) — иметь право на
+auf keinen Fall — ни в коем случае
+das Recht haben — иметь право
+Verständnis haben für — понимать, относиться с пониманием к чему-либо
+verärgert über — рассерженный на, раздосадованный чем-либо
 
 =================================
 ✍️ REDEMITTEL Schreiben

@@ -297,6 +297,10 @@ class GoogleSheetsHandler:
         finally:
             socket.setdefaulttimeout(previous_socket_timeout)
 
+    def _is_block_full(self, block_rows: list[list[str]]) -> bool:
+        """Проверяет, заполнен ли блок (нет ли свободных слотов)"""
+        return self._find_next_empty_block_row(block_rows) is None
+
     def sync_category_words(
         self,
         sheet_name: str,
@@ -316,6 +320,11 @@ class GoogleSheetsHandler:
 
         value_updates: list[dict[str, Any]] = []
         new_blocks: list[tuple[int, list[list[str]]]] = []
+
+        # Переменные для текущего блока, который заполняется
+        current_block_teil = None
+        current_block_rows = None
+        current_block_index = None
 
         for word in words:
             duplicate_key = term_duplicate_key(word.term)
@@ -346,6 +355,7 @@ class GoogleSheetsHandler:
                 )
                 continue
 
+            # Сначала используем существующие свободные слоты
             if kapitel_state.slots:
                 slot = kapitel_state.slots.pop(0)
                 row_values = self._build_word_row(
@@ -369,30 +379,61 @@ class GoogleSheetsHandler:
                 )
                 continue
 
-            new_block_teil = kapitel_state.next_teil + len(new_blocks)
-            module_label = self._build_module_label(sheet_name, kapitel, new_block_teil)
-            new_block_rows = self._build_empty_block_rows(module_label)
-            new_blocks.append((new_block_teil, new_block_rows))
-            next_slot_idx = self._find_next_empty_block_row(new_block_rows)
+            # Если нет свободных слотов, проверяем текущий блок
+            if current_block_rows is None or self._is_block_full(current_block_rows):
+                # Создаём новый блок
+                current_block_teil = kapitel_state.next_teil + len(new_blocks)
+                module_label = self._build_module_label(sheet_name, kapitel, current_block_teil)
+                current_block_rows = self._build_empty_block_rows(module_label)
+                new_blocks.append((current_block_teil, current_block_rows))
+                current_block_index = len(new_blocks) - 1
+                planned_actions.append(
+                    PlannedAction(
+                        action="create_teil",
+                        row_number=kapitel_state.insert_row + current_block_index * len(current_block_rows),
+                        teil=current_block_teil,
+                        term="",
+                        details=f"создан новый блок Teil {current_block_teil}",
+                    )
+                )
+
+            # Находим следующий свободный слот в текущем блоке
+            next_slot_idx = self._find_next_empty_block_row(current_block_rows)
+            if next_slot_idx is None:
+                # Блок полон, создадим новый на следующей итерации
+                current_block_rows = None
+                continue
+
             row_values = self._build_word_row(
                 item_index=next_slot_idx,
                 term=word.term,
                 definition=word.definition,
-                module_label=module_label,
+                module_label=self._build_module_label(sheet_name, kapitel, current_block_teil),
                 priority=word.priority,
             )
-            new_block_rows[next_slot_idx] = row_values
+            current_block_rows[next_slot_idx] = row_values
             result.added_count += 1
-            new_row_number = kapitel_state.insert_row + (len(new_blocks) - 1) * len(new_block_rows) + next_slot_idx
+
+            new_row_number = kapitel_state.insert_row + current_block_index * len(current_block_rows) + next_slot_idx
             planned_actions.append(
                 PlannedAction(
                     action="fill_new_teil",
                     row_number=new_row_number,
-                    teil=new_block_teil,
+                    teil=current_block_teil,
                     term=word.term,
                 )
             )
             existing_words[duplicate_key] = (new_row_number, word.priority)
+
+            if self._is_redemittel_schreiben_sheet(sheet_name):
+                self._prepend_schreiben_slots_from_new_block(
+                    kapitel_state=kapitel_state,
+                    new_block_rows=current_block_rows,
+                    filled_row_index_in_block=next_slot_idx,
+                    block_ordinal=current_block_index,
+                    teil=current_block_teil,
+                    module_label=self._build_module_label(sheet_name, kapitel, current_block_teil),
+                )
 
         if not self.dry_run:
             self._apply_mutations(
@@ -429,6 +470,9 @@ class GoogleSheetsHandler:
 
         self._validate_kapitel_structure(kapitel_headers, teil_blocks, kapitel)
 
+        if self._is_redemittel_schreiben_sheet(sheet_name):
+            return self._get_kapitel_state_schreiben(rows, kapitel_headers, teil_blocks)
+
         kapitel_header = next((header for header in kapitel_headers if header.kapitel == kapitel), None)
 
         if kapitel_header is None:
@@ -459,6 +503,35 @@ class GoogleSheetsHandler:
 
         return KapitelState(slots=slots, next_teil=next_teil, insert_row=insert_row)
 
+    def _get_kapitel_state_schreiben(
+        self,
+        rows: list[list[str]],
+        kapitel_headers: list[KapitelHeader],
+        teil_blocks: list[KapitelBlock],
+    ) -> KapitelState:
+        """
+        Лист ✍️ Schreiben: блоки «Schreiben B2 - Teil n» (без Kapitel из учебника).
+        Все Teil на листе, свободные слоты по порядку Teil; новый блок — как у Sprechen/Fokus.
+        Номер --kapitel из CLI на этот лист не влияет.
+        """
+        blocks = list(teil_blocks)
+        blocks.sort(key=lambda item: (item.teil, item.header_row))
+        if not blocks:
+            return KapitelState(slots=[], next_teil=1, insert_row=len(rows) + 1)
+
+        slots: list[Slot] = []
+        for block in blocks:
+            slots.extend(self._collect_free_slots(rows, block))
+
+        next_teil = max((block.teil for block in blocks), default=0) + 1
+        first_kapitel_header_row = min(
+            (header.row_number for header in kapitel_headers),
+            default=len(rows) + 1,
+        )
+        insert_row = max((block.data_end_row for block in blocks), default=0) + 1
+        insert_row = min(insert_row, first_kapitel_header_row)
+        return KapitelState(slots=slots, next_teil=next_teil, insert_row=insert_row)
+
     @staticmethod
     def _validate_kapitel_structure(
         kapitel_headers: list[KapitelHeader],
@@ -478,7 +551,6 @@ class GoogleSheetsHandler:
         # чтобы сначала заполнять их пустые слоты сверху вниз.
 
     def _collect_free_slots(self, rows: list[list[str]], block: KapitelBlock) -> list[Slot]:
-        index_col = self._column_to_index(self.sheet_layout.index_column)
         term_col = self._column_to_index(self.sheet_layout.term_column)
         definition_col = self._column_to_index(self.sheet_layout.definition_column)
         module_col = self._column_to_index(self.sheet_layout.module_link_column)
@@ -492,7 +564,8 @@ class GoogleSheetsHandler:
             term_value = self._get_row_value(row, term_col)
             definition_value = self._get_row_value(row, definition_col)
             module_value = self._get_row_value(row, module_col)
-            item_index = self._parse_int(self._get_row_value(row, index_col), expected_index)
+            # Не брать № из колонки A: после сбоёв там могут быть «17,18,20», ломая следующий Teil.
+            item_index = expected_index
 
             if self._is_slot_occupied(term_value, definition_value, module_value, block):
                 continue
@@ -755,6 +828,24 @@ class GoogleSheetsHandler:
                 )
             return blocks
 
+        if self._is_redemittel_schreiben_sheet(sheet_name):
+            for row_number, row in enumerate(rows, start=1):
+                row_text = self._row_text(row)
+                teil = self._parse_schreiben_teil_header(row_text)
+                if teil is None:
+                    continue
+                blocks.append(
+                    KapitelBlock(
+                        kapitel=1,
+                        teil=teil,
+                        header_row=row_number,
+                        data_start_row=row_number + 1,
+                        data_end_row=row_number + self.sheet_layout.teil_size,
+                        module_label=self._build_module_label(sheet_name, kapitel, teil),
+                    )
+                )
+            return blocks
+
         current_kapitel: int | None = None
         for row_number, row in enumerate(rows, start=1):
             row_text = self._row_text(row)
@@ -965,12 +1056,54 @@ class GoogleSheetsHandler:
     @staticmethod
     def _looks_like_header(value: str) -> bool:
         normalized = normalize_text(value)
-        return normalized.startswith("fokus deutsch") or normalized.startswith("kapitel ")
+        return (
+            normalized.startswith("fokus deutsch")
+            or normalized.startswith("kapitel ")
+            or normalized.startswith("schreiben b2")
+        )
 
     @staticmethod
     def _is_redemittel_sprechen_sheet(sheet_name: str) -> bool:
         normalized = normalize_text(sheet_name)
         return normalized == normalize_text("🗣️ REDEMITTEL Sprechen") or "redemittel sprechen" in normalized
+
+    @staticmethod
+    def _is_redemittel_schreiben_sheet(sheet_name: str) -> bool:
+        normalized = normalize_text(sheet_name)
+        return normalized == normalize_text("✍️ REDEMITTEL Schreiben") or "redemittel schreiben" in normalized
+
+    def _prepend_schreiben_slots_from_new_block(
+        self,
+        kapitel_state: KapitelState,
+        new_block_rows: list[list[str]],
+        filled_row_index_in_block: int,
+        block_ordinal: int,
+        teil: int,
+        module_label: str,
+    ) -> None:
+        """Оставшиеся пустые строки только что созданного Teil — в очередь слотов."""
+        term_idx = self._column_to_index(self.sheet_layout.term_column) - 1
+        block_height = len(new_block_rows)
+        block_top = kapitel_state.insert_row + block_ordinal * block_height
+        pending: list[Slot] = []
+        for i in range(1, len(new_block_rows)):
+            if i == filled_row_index_in_block:
+                continue
+            row_vals = new_block_rows[i]
+            term_cell = row_vals[term_idx] if term_idx < len(row_vals) else ""
+            if term_cell.strip():
+                continue
+            row_number = block_top + i
+            item_index = i
+            pending.append(
+                Slot(
+                    row_number=row_number,
+                    item_index=item_index,
+                    teil=teil,
+                    module_label=module_label,
+                )
+            )
+        kapitel_state.slots = pending + kapitel_state.slots
 
     def _is_sprechen_sheet_by_structure(self, rows: list[list[str]]) -> bool:
         sprechen_header_count = 0
@@ -988,24 +1121,41 @@ class GoogleSheetsHandler:
         return sprechen_header_count >= 2 and kapitel_header_count == 0
 
     def _get_header_fill_color(self, sheet_name: str) -> str:
-        if self._is_redemittel_sprechen_sheet(sheet_name):
+        if self._is_redemittel_sprechen_sheet(sheet_name) or self._is_redemittel_schreiben_sheet(sheet_name):
             return "#5f78bd"
         return self.sheet_layout.header_fill_color
 
     def _build_block_header_text(self, sheet_name: str, kapitel: int, teil: int) -> str:
         if self._is_redemittel_sprechen_sheet(sheet_name):
             return f"Sprechen B2 - Teil {teil}"
+        if self._is_redemittel_schreiben_sheet(sheet_name):
+            return f"Schreiben B2 - Teil {teil}"
         return f"Kapitel {kapitel} : часть {teil}"
 
     def _build_module_label(self, sheet_name: str, kapitel: int, teil: int) -> str:
         if self._is_redemittel_sprechen_sheet(sheet_name):
             return f"Sprechen B2 - Teil {teil}"
+        if self._is_redemittel_schreiben_sheet(sheet_name):
+            return f"Schreiben B2 - Teil {teil}"
         return f"Kapitel {kapitel} - \u0447\u0430\u0441\u0442\u044c {teil}"
 
     @staticmethod
     def _parse_sprechen_teil_header(value: str) -> int | None:
         text = normalize_text(value)
         match = re.fullmatch(r"sprechen\s*b2\s*-\s*teil\s+(\d+)", text)
+        if not match:
+            return None
+        return int(match.group(1))
+
+    @staticmethod
+    def _parse_schreiben_teil_header(value: str) -> int | None:
+        """
+        Только строка-заголовок целиком (как у Sprechen). Иначе re.search цеплялся бы за
+        колонку E «Schreiben B2 - Teil 1» в каждой строке данных через _row_text.
+        """
+        stripped = value.replace('"', "").replace("\u201c", "").replace("\u201d", "")
+        text = normalize_text(stripped)
+        match = re.fullmatch(r"schreiben\s*b2\s*-\s*teil\s+(\d+)", text)
         if not match:
             return None
         return int(match.group(1))

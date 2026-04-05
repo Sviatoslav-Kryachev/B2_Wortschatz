@@ -1,4 +1,5 @@
-﻿from pathlib import Path
+import re
+from pathlib import Path
 
 from utils import repair_mojibake
 
@@ -14,11 +15,33 @@ KNOWN_CATEGORY_PREFIXES = (
 
 def _is_category_line(line: str) -> bool:
     normalized = line.strip()
-    if not normalized or "—" in normalized:
+    if not normalized or _line_has_term_definition_separator(normalized):
         return False
     if normalized == "Фраза:":
         return False
     return any(normalized.startswith(prefix) for prefix in KNOWN_CATEGORY_PREFIXES)
+
+
+def _split_term_definition(line: str) -> tuple[str, str] | None:
+    """Термин и перевод: em dash, en dash или «пробел-дефис-пробел»."""
+    for sep in ("\u2014", "\u2013"):  # — –
+        if sep in line:
+            term, _, definition = line.partition(sep)
+            term, definition = term.strip(), definition.strip()
+            if term and definition:
+                return term, definition
+    if " - " in line:
+        term, _, definition = line.partition(" - ")
+        term, definition = term.strip(), definition.strip()
+        if term and definition:
+            return term, definition
+    return None
+
+
+def _line_has_term_definition_separator(line: str) -> bool:
+    if "\u2014" in line or "\u2013" in line:
+        return True
+    return bool(re.search(r"\S\s+-\s+\S", line))
 
 
 def _normalize_category_name(line: str) -> str:
@@ -33,6 +56,8 @@ def parse_input_file(file_path: str | Path) -> dict[str, list[tuple[str, str]]]:
     Возвращает словарь вида:
     {
         "Существительное": [("die Voraussetzung (-en)", "предпосылка")],
+        "Фраза: 🗣 REDEMITTEL": [...],
+        "✍️ REDEMITTEL Schreiben": [...],
         ...
     }
     """
@@ -53,7 +78,8 @@ def parse_input_file(file_path: str | Path) -> dict[str, list[tuple[str, str]]]:
                     categories.setdefault(current_category, [])
                 continue
 
-            if "—" not in line:
+            pair = _split_term_definition(line)
+            if pair is None:
                 continue
 
             if current_category is None:
@@ -62,7 +88,7 @@ def parse_input_file(file_path: str | Path) -> dict[str, list[tuple[str, str]]]:
                     f"{line}"
                 )
 
-            term, definition = line.split("—", 1)
-            categories[current_category].append((term.strip(), definition.strip()))
+            term, definition = pair
+            categories[current_category].append((term, definition))
 
     return categories

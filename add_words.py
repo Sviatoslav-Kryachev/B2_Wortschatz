@@ -1,4 +1,4 @@
-﻿import argparse
+import argparse
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -26,7 +26,11 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--kapitel",
         type=int,
         required=True,
-        help="Номер Kapitel, в который добавляются слова",
+        metavar="N",
+        help=(
+            "Номер Kapitel из учебника для листа 📗 Fokus Deutsch и для 🗣 REDEMITTEL Sprechen. "
+            "Лист ✍️ REDEMITTEL Schreiben использует только блоки «Schreiben B2 - Teil n»; этот номер на него не влияет."
+        ),
     )
     parser.add_argument(
         "--file",
